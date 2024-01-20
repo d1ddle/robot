@@ -1,53 +1,62 @@
 from sr.robot3 import *
 import math
 
-robot = Robot()
+#init
+robot = Robot(wait_for_start=False)
+power = robot.power_board
+motors = robot.motor_board.motors
+power.outputs.power_on()
 
-#loop in new thread to constantly check position relative to markers and align
-markers = robot.camera.see()
-anchor_marker = ""
-for marker in markers:
-    if marker.id > -1 and marker.id < 28 and anchor_marker = "":
-        anchor_marker = marker
-        marker_align(anchor_marker)
+done=True
+done2=False
+while not done:
+    markers = robot.camera.see()
+    for marker in markers:
+        print(marker.id, marker.orientation.yaw)
+        ## PART A
+        passed_b = False
+        if marker.orientation.yaw>0.2618: ##more than 15degrees left from square on
+            robot.kch.leds[LED_A].colour = Colour.YELLOW
+            robot.kch.leds[LED_B].colour = Colour.OFF
+            robot.kch.leds[LED_C].colour = Colour.OFF
+            print("LED A")
+        elif marker.orientation.yaw<0.2618 and not passed_b:
+            robot.kch.leds[LED_B].colour = Colour.YELLOW
+            robot.kch.leds[LED_A].colour = Colour.OFF
+            robot.kch.leds[LED_C].colour = Colour.OFF
+            print("LED B, A")
+        elif marker.orientation.yaw>-0.2618 and not passed_b: ##middle 30degree arc
+            robot.kch.leds[LED_B].colour = Colour.YELLOW
+            robot.kch.leds[LED_A].colour = Colour.OFF
+            robot.kch.leds[LED_C].colour = Colour.OFF
+            print("LED B, B")
+        if marker.orientation.yaw<-0.24: ##more than 15degrees right from square on
+            passed_b = True
+            robot.kch.leds[LED_C].colour = Colour.YELLOW
+            robot.kch.leds[LED_B].colour = Colour.OFF
+            robot.kch.leds[LED_A].colour = Colour.OFF
+            print("LED C")
+        if passed_b:
+            robot.kch.leds[LED_C].colour = Colour.YELLOW
+            robot.kch.leds[LED_B].colour = Colour.OFF
+            robot.kch.leds[LED_A].colour = Colour.OFF
 
-def marker_align(marker):
-    mo = marker.orientation
-    if mo.roll > math.pi/8 or mo.roll < -(math.pi/8)
-        return "roll error! robot must have fallen on one side!"
-    if mo.pitch > math.pi/8 or mo.pitch < -(math.pi/8)
-        return "pitch error! robot must be tipped forwards/back!"
-    
-    if mo.yaw < 0:
-        rotate_left, new_anchor_marker
-    elif mo.yaw > 0:
-        rotate_right, new_anchor_marker
-    else:
-        return "aligned!"
 
-#loop to constantly check whether against a wall, try 3 times, then back off & turn around.
-
-#linear main program to start; move forward
-
-# first motor board, channel 0 to half power forward
-robot.motor_board.motors[0].power = 0.5
-
-# motor board "srABC1", channel 1 to half power forward
-# using the syntax to access multiple motor boards
-robot.motor_boards['srABC1'].motors[1].power = 0.5
-
-for i in range(0,10):
-    r5 = round(robot.arduino.pins[A5].analog_read(),2)
-    r4 = round(robot.arduino.pins[A4].analog_read(),2)
-    r3 = round(robot.arduino.pins[A3].analog_read(),2)
-    print(f"Rear: {r5} Gripper: {r4} {r3}")
-    robot.sleep(0.2)
-
-# sleep for 2 second
-#robot.sleep(2)
-
-# first motor board, channel 0 to stopped
-robot.motor_board.motors[0].power = 0
-
-# first motor board, channel 1 to stopped
-robot.motor_board.motors[1].power = 0
+while not done2:
+    markers = robot.camera.see()
+    for marker in markers:
+        ## PART B
+        ## FOR WHEN ROBOT IS 1metre AWAY FROM MARKER:
+        print((marker.position.horizontal_angle*180)/math.pi)
+        if ((marker.position.horizontal_angle*180)/math.pi)<-11.31: ##more than 11.31 degrees left of line perpendicular to marker
+            robot.kch.leds[LED_C].colour = Colour.BLUE
+            robot.kch.leds[LED_B].colour = Colour.OFF
+            robot.kch.leds[LED_A].colour = Colour.OFF
+        if ((marker.position.horizontal_angle*180)/math.pi)>-11.31 and ((marker.position.horizontal_angle*180)/math.pi)<11.31: ##middle 22.62 degrees; within 200mm of line
+            robot.kch.leds[LED_B].colour = Colour.YELLOW
+            robot.kch.leds[LED_A].colour = Colour.OFF
+            robot.kch.leds[LED_C].colour = Colour.OFF
+        if ((marker.position.horizontal_angle*180)/math.pi)>11.31: ##when robot is more than 200mm right of line, aka >11.31 degrees
+            robot.kch.leds[LED_A].colour = Colour.BLUE
+            robot.kch.leds[LED_B].colour = Colour.OFF
+            robot.kch.leds[LED_C].colour = Colour.OFF
